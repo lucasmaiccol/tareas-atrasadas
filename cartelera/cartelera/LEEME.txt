@@ -1,0 +1,13 @@
+CARTELERA DE CINE — práctica corta
+===================================
+
+1. Copiá esta carpeta dentro de  C:\xampp\htdocs
+2. Arrancá Apache y MySQL desde XAMPP
+3. En phpMyAdmin -> Importar, cargá  cartelera.sql   (es un solo archivo)
+4. Entrá a  http://localhost/cartelera/
+
+El único archivo que se edita es  index.php
+Son siete zonas: cinco están marcadas con cajas punteadas en la página,
+y las otras dos (la 1 y la 7) con comentarios grandes arriba del archivo.
+
+Las consignas y las pistas están en  cartelera-practica.pdf
