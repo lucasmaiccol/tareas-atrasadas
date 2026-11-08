@@ -30,9 +30,11 @@ class Cliente extends Modelo
      */
     public function todos()
     {
-        // TODO — Ejercicio 3
+        $sql = "SELECT id, nombre, documento, telefono, email, direccion, alta
+                FROM clientes
+                ORDER BY nombre";
 
-        return [];
+        return $this->consulta($sql)->fetchAll();
     }
 
 
@@ -58,9 +60,14 @@ class Cliente extends Modelo
      */
     public function buscarPorId($id)
     {
-        // TODO — Ejercicio 4
+        $sql = "SELECT id, nombre, documento, telefono, email, direccion, alta
+                FROM clientes
+                WHERE id = ?
+                LIMIT 1";
 
-        return null;
+        $fila = $this->consulta($sql, [(int) $id])->fetch();
+
+        return $fila === false ? null : $fila;
     }
 
 
@@ -94,9 +101,16 @@ class Cliente extends Modelo
      */
     public function buscar($texto)
     {
-        // TODO — Ejercicio 5
+        $patron = '%' . $texto . '%';
 
-        return [];
+        $sql = "SELECT id, nombre, documento, telefono, email, direccion, alta
+                FROM clientes
+                WHERE nombre LIKE ?
+                   OR documento LIKE ?
+                   OR email LIKE ?
+                ORDER BY nombre";
+
+        return $this->consulta($sql, [$patron, $patron, $patron])->fetchAll();
     }
 
 
@@ -118,9 +132,12 @@ class Cliente extends Modelo
      */
     public function contar()
     {
-        // TODO — Ejercicio 6
+        $sql = "SELECT COUNT(*) AS total
+                FROM clientes";
 
-        return 0;
+        $fila = $this->consulta($sql)->fetch();
+
+        return (int) $fila['total'];
     }
 
 
@@ -152,8 +169,17 @@ class Cliente extends Modelo
      */
     public function crear(array $datos)
     {
-        // TODO — Ejercicio 7
+        $sql = "INSERT INTO clientes (nombre, documento, telefono, email, direccion, alta)
+                VALUES (?, ?, ?, ?, ?, CURDATE())";
 
-        return 0;
+        $this->consulta($sql, [
+            $datos['nombre'],
+            $datos['documento'],
+            isset($datos['telefono']) ? $datos['telefono'] : null,
+            isset($datos['email'])    ? $datos['email']    : null,
+            isset($datos['direccion']) ? $datos['direccion'] : null,
+        ]);
+
+        return $this->ultimoId();
     }
 }

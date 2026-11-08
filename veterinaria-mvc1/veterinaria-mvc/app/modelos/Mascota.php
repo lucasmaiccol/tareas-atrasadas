@@ -59,9 +59,19 @@ class Mascota extends Modelo
      */
     public function todasConDuenoYEspecie()
     {
-        // TODO — Ejercicio 8
+        $sql = "SELECT  m.id,
+                        m.nombre,
+                        m.sexo,
+                        m.peso_kg,
+                        c.nombre AS dueno,
+                        m.cliente_id,
+                        e.nombre AS especie
+                FROM mascotas m
+                INNER JOIN clientes c ON c.id = m.cliente_id
+                INNER JOIN especies e ON e.id = m.especie_id
+                ORDER BY m.nombre";
 
-        return [];
+        return $this->consulta($sql)->fetchAll();
     }
 
 
@@ -85,9 +95,17 @@ class Mascota extends Modelo
      */
     public function porCliente($clienteId)
     {
-        // TODO — Ejercicio 9
+        $sql = "SELECT  m.id,
+                        m.nombre,
+                        m.sexo,
+                        m.fecha_nacimiento,
+                        e.nombre AS especie
+                FROM mascotas m
+                INNER JOIN especies e ON e.id = m.especie_id
+                WHERE m.cliente_id = ?
+                ORDER BY m.nombre";
 
-        return [];
+        return $this->consulta($sql, [(int) $clienteId])->fetchAll();
     }
 
 
@@ -114,9 +132,24 @@ class Mascota extends Modelo
      */
     public function verFicha($id)
     {
-        // TODO — Ejercicio 10
+        $sql = "SELECT  m.id,
+                        m.nombre,
+                        m.fecha_nacimiento,
+                        m.sexo,
+                        m.peso_kg,
+                        c.nombre AS dueno,
+                        m.cliente_id,
+                        e.nombre AS especie,
+                        e.esperanza_vida
+                FROM mascotas m
+                INNER JOIN clientes c ON c.id = m.cliente_id
+                INNER JOIN especies e ON e.id = m.especie_id
+                WHERE m.id = ?
+                LIMIT 1";
 
-        return null;
+        $fila = $this->consulta($sql, [(int) $id])->fetch();
+
+        return $fila === false ? null : $fila;
     }
 
 
@@ -147,9 +180,16 @@ class Mascota extends Modelo
      */
     public function pesoPromedioPorEspecie()
     {
-        // TODO — Ejercicio 11
+        // INNER JOIN: solo las especies que tienen al menos una mascota
+        $sql = "SELECT  e.nombre                 AS especie,
+                        COUNT(m.id)              AS cantidad,
+                        ROUND(AVG(m.peso_kg), 2) AS peso_promedio
+                FROM especies e
+                INNER JOIN mascotas m ON m.especie_id = e.id
+                GROUP BY e.id, e.nombre
+                ORDER BY cantidad DESC, e.nombre";
 
-        return [];
+        return $this->consulta($sql)->fetchAll();
     }
 
 
@@ -175,8 +215,12 @@ class Mascota extends Modelo
      */
     public function actualizarPeso($id, $pesoKg)
     {
-        // TODO — Ejercicio 12
+        $sql = "UPDATE mascotas
+                SET peso_kg = ?
+                WHERE id = ?";
 
-        return false;
+        $sentencia = $this->consulta($sql, [(float) $pesoKg, (int) $id]);
+
+        return $sentencia->rowCount() > 0;
     }
 }

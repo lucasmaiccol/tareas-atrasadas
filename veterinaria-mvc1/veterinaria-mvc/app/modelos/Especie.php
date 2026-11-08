@@ -51,9 +51,11 @@ class Especie extends Modelo
      */
     public function todas()
     {
-        // TODO — Ejercicio 1
+        $sql = "SELECT id, nombre, esperanza_vida
+                FROM especies
+                ORDER BY nombre";
 
-        return [];   // ← borrá esta línea cuando resuelvas
+        return $this->consulta($sql)->fetchAll();
     }
 
 
@@ -93,8 +95,16 @@ class Especie extends Modelo
      */
     public function conCantidadMascotas()
     {
-        // TODO — Ejercicio 2
+        // LEFT JOIN: conserva las especies sin mascotas (COUNT(m.id) da 0)
+        $sql = "SELECT  e.id,
+                        e.nombre,
+                        e.esperanza_vida,
+                        COUNT(m.id) AS cantidad_mascotas
+                FROM especies e
+                LEFT JOIN mascotas m ON m.especie_id = e.id
+                GROUP BY e.id, e.nombre, e.esperanza_vida
+                ORDER BY e.nombre";
 
-        return [];   // ← borrá esta línea cuando resuelvas
+        return $this->consulta($sql)->fetchAll();
     }
 }

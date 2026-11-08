@@ -64,9 +64,23 @@ class Consulta extends Modelo
      */
     public function ultimas($limite = 8)
     {
-        // TODO — Ejercicio 13
+        // $limite se convierte a entero con (int): es lo que hace seguro concatenarlo
+        $sql = "SELECT  c.id,
+                        c.fecha,
+                        c.motivo,
+                        c.costo,
+                        m.nombre AS mascota,
+                        m.id     AS mascota_id,
+                        cl.nombre AS dueno,
+                        v.nombre AS veterinario
+                FROM consultas c
+                INNER JOIN mascotas m     ON m.id  = c.mascota_id
+                INNER JOIN clientes cl    ON cl.id = m.cliente_id
+                INNER JOIN veterinarios v ON v.id  = c.veterinario_id
+                ORDER BY c.fecha DESC, c.id DESC
+                LIMIT " . (int) $limite;
 
-        return [];
+        return $this->consulta($sql)->fetchAll();
     }
 
 
@@ -91,9 +105,18 @@ class Consulta extends Modelo
      */
     public function historialDeMascota($mascotaId)
     {
-        // TODO — Ejercicio 14
+        $sql = "SELECT  c.id,
+                        c.fecha,
+                        c.motivo,
+                        c.diagnostico,
+                        c.costo,
+                        v.nombre AS veterinario
+                FROM consultas c
+                INNER JOIN veterinarios v ON v.id = c.veterinario_id
+                WHERE c.mascota_id = ?
+                ORDER BY c.fecha DESC, c.id DESC";
 
-        return [];
+        return $this->consulta($sql, [(int) $mascotaId])->fetchAll();
     }
 
 
@@ -118,9 +141,17 @@ class Consulta extends Modelo
      */
     public function facturacionPorVeterinario()
     {
-        // TODO — Ejercicio 15
+        // INNER JOIN: solo los veterinarios que atendieron al menos una consulta
+        $sql = "SELECT  v.nombre       AS veterinario,
+                        v.especialidad,
+                        COUNT(c.id)    AS atenciones,
+                        SUM(c.costo)   AS total
+                FROM veterinarios v
+                INNER JOIN consultas c ON c.veterinario_id = v.id
+                GROUP BY v.id, v.nombre, v.especialidad
+                ORDER BY total DESC";
 
-        return [];
+        return $this->consulta($sql)->fetchAll();
     }
 
 
@@ -166,9 +197,27 @@ class Consulta extends Modelo
      */
     public function mascotasSinVisitaReciente($dias = 120)
     {
-        // TODO — Ejercicio 16
+        // LEFT JOIN con consultas: las mascotas que nunca vinieron quedan con NULL.
+        // HAVING (y no WHERE) porque se filtra por el resultado de MAX().
+        // En MySQL los NULL van primero en ORDER BY ... ASC: las que nunca
+        // vinieron quedan arriba y después las de visita más vieja.
+        $sql = "SELECT  m.id,
+                        m.nombre,
+                        e.nombre                            AS especie,
+                        cl.nombre                           AS dueno,
+                        cl.telefono,
+                        MAX(c.fecha)                        AS ultima_visita,
+                        DATEDIFF(CURDATE(), MAX(c.fecha))   AS dias_sin_venir
+                FROM mascotas m
+                INNER JOIN especies e  ON e.id  = m.especie_id
+                INNER JOIN clientes cl ON cl.id = m.cliente_id
+                LEFT  JOIN consultas c ON c.mascota_id = m.id
+                GROUP BY m.id, m.nombre, e.nombre, cl.nombre, cl.telefono
+                HAVING ultima_visita IS NULL
+                    OR dias_sin_venir > ?
+                ORDER BY ultima_visita ASC";
 
-        return [];
+        return $this->consulta($sql, [(int) $dias])->fetchAll();
     }
 
 
@@ -191,8 +240,18 @@ class Consulta extends Modelo
      */
     public function registrar(array $datos)
     {
-        // TODO — Ejercicio 17
+        $sql = "INSERT INTO consultas (mascota_id, veterinario_id, fecha, motivo, diagnostico, costo)
+                VALUES (?, ?, ?, ?, ?, ?)";
 
-        return 0;
+        $this->consulta($sql, [
+            (int) $datos['mascota_id'],
+            (int) $datos['veterinario_id'],
+            $datos['fecha'],
+            $datos['motivo'],
+            isset($datos['diagnostico']) ? $datos['diagnostico'] : null,
+            (float) $datos['costo'],
+        ]);
+
+        return $this->ultimoId();
     }
 }
